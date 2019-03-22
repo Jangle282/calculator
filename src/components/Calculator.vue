@@ -5,7 +5,7 @@
     <div class="calculator">
       <div :style="styleObject" class="component display">{{display || 0}}</div>
       <br>
-      <div @click="clear" class="component btn clear">K</div>
+      <div @click="clear" class="component btn clear">C</div>
       <div @click="plusMinus" class="component btn input">+/-</div>
       <div @click="operation(`/`)" class="component btn operator">/</div>
       <div @click="input(`7`)" class="component btn test input">7</div>
@@ -35,7 +35,7 @@ export default {
       display: "", // what is shown in the display div
       lastBtnType: "start", //  to determine logic for input and operator method can be "start" "input" or "operator"
       operator: "", // the last operator button clicked
-      fact: "return a result to see a number fakt", // fact relating to the result from numbers api
+      fact: "return a result to see a number fact", // fact relating to the result from numbers api
       styleObject: {
         direction: "ltr"
       } // when display is too long for the screen can change language direction and clip on the left
@@ -43,16 +43,18 @@ export default {
   },
 
   methods: {
+    // resets all data when clear button pressed
     clear() {
       this.runningCalc = "";
       this.display = "";
       this.lastBtnType = "start";
       this.operator = "";
-      this.fact = "Return a result to see a number fakt";
+      this.fact = "Return a result to see a number fact";
     },
 
     plusMinus() {
-      this.display = String(parseInt(this.display) * -1);
+      this.display = String(parseFloat(this.display) * -1);
+      this.displayDir();
     },
 
     input(value) {
@@ -61,34 +63,45 @@ export default {
       } else if (this.lastBtnType === "input" && this.display !== 0) {
         this.display += value;
       }
-      if (this.display.length > 16) this.styleObject.direction = "rtl";
+      this.displayDir();
+      // if (this.display.length > 16) this.styleObject.direction = "rtl";
       this.lastBtnType = "input";
     },
 
     operation(value) {
       if (this.operator === "start") {
-        this.runningCalc = this.display;
+        this.runningCalc = this.display; // stores the first value for running calc.
+      } else if (this.lastBtnType === "operator") {
+        this.operator = value; // if operator pushed more than once in a row - doesn't calculate anything or change display value
       } else {
         this.runningCalc = eval(
           `${this.runningCalc}${this.operator}${this.display}`
-        );
+        ); // calculates the running total according to the previous operator clicked and stores to runningCalc
       }
-      if (value === "start") this.getFact(this.runningCalc);
-      if (this.display.length > 16) {
-        // this.runningCalc = String(parseInt(this.display).toExponential());
-        this.styleObject.direction = "ltr";
-      }
-      this.display = this.runningCalc;
-      this.operator = value;
-      this.lastBtnType = "operator";
+      this.display = this.runningCalc; // displays the runningCalc
+      if (value === "start") this.getFact(this.runningCalc); // retreives number fact for the displayed value if the button pressed was the equals button
+      this.displayDir();
+      this.operator = value; // sets the operator to the one the user just clicked
+      this.lastBtnType = "operator"; //
     },
 
+    // if the display number is long, converts it to an exponential and changes direction so can truncate at the left side of the display.
+    displayDir() {
+      if (this.display && this.display.length > 16) {
+        this.display = String(parseFloat(this.display).toExponential());
+        this.styleObject.direction = "rtl";
+        console.log("hello from if", this.styleObject.direction);
+      } else {
+        this.styleObject.direction = "ltr";
+        console.log("hello from elese", this.styleObject.direction);
+      }
+    },
+    // API call for number fact
     getFact(number) {
       number = Math.round(number) || 0;
       axios
         .get(`http://numbersapi.com/${number}?notfound=floor`)
         .then(fact => {
-          console.log(fact);
           this.fact = fact.data;
         })
         .catch(error => console.log(error));
