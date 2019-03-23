@@ -1,7 +1,7 @@
 <template>
   <div class="main">
     <h1>KALKULATOR</h1>
-    <p>{{fact}}</p>
+    <h3>{{fact}}</h3>
     <div class="calculator">
       <div :style="styleObject" class="component display">
         <p>{{operator}}</p>
