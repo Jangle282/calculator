@@ -8,40 +8,47 @@
         {{display || 0}}
       </div>
       <br>
-      <div @click="clear" class="component btn clear">C</div>
-      <div @click="plusMinus" class="component btn input">+/-</div>
-      <div @click="operation(`/`)" class="component btn operator">/</div>
-      <div @click="input(`7`)" class="component btn input">7</div>
-      <div @click="input(`8`)" class="component btn input">8</div>
-      <div @click="input(`9`)" class="component btn input">9</div>
-      <div @click="operation(`*`)" class="component btn operator">x</div>
-      <div @click="input(`4`)" class="component btn input">4</div>
-      <div @click="input(`5`)" class="component btn input">5</div>
-      <div @click="input(`6`)" class="component btn input">6</div>
-      <div @click="operation(`-`)" class="component btn operator">-</div>
-      <div @click="input(`1`)" class="component btn input">1</div>
-      <div @click="input(`2`)" class="component btn input">2</div>
-      <div @click="input(`3`)" class="component btn input">3</div>
-      <div @click="operation(`+`)" class="component btn operator">+</div>
-      <div @click="input(`0`)" class="component btn input">0</div>
-      <div @click="input(`.`)" class="component btn input">.</div>
-      <div @click="operation(`ans`)" class="component btn operator equals">=</div>
+      <Button value="C" type="clear" v-on:btnClick="clear"/>
+      <Button value="+/-" type="plusMinus" v-on:btnClick="plusMinus"/>
+      <Button value="/" type="operation" v-on:btnClick="operation"/>
+      <Button value="7" type="input" v-on:btnClick="input"/>
+      <Button value="8" type="input" v-on:btnClick="input"/>
+      <Button value="9" type="input" v-on:btnClick="input"/>
+      <Button userValue="x" value="*" type="operation" v-on:btnClick="operation"/>
+      <Button value="4" type="input" v-on:btnClick="input"/>
+      <Button value="5" type="input" v-on:btnClick="input"/>
+      <Button value="6" type="input" v-on:btnClick="input"/>
+      <Button value="-" type="operation" v-on:btnClick="operation"/>
+      <Button value="1" type="input" v-on:btnClick="input"/>
+      <Button value="2" type="input" v-on:btnClick="input"/>
+      <Button value="3" type="input" v-on:btnClick="input"/>
+      <Button value="+" type="operation" v-on:btnClick="operation"/>
+      <Button value="0" type="input" v-on:btnClick="input"/>
+      <Button value="." type="input" v-on:btnClick="input"/>
+      <Button userValue="=" value="ans" type="operation equals" v-on:btnClick="operation"/>
     </div>
   </div>
 </template>
 
 <script>
+import Button from "./Button.vue";
+import { setTimeout } from "timers";
+
 export default {
+  components: {
+    Button
+  },
+
   data() {
     return {
-      runningCalc: "", // the running result of calculations performed inbetween clears or new anss.
+      runningCalc: "", // the running result of calculations performed inbetween clears.
       display: "", // what is shown in the display div
-      lastBtnType: "ans", //  to determine logic for input and operator method can be "ans" "input" or "operator"
-      operator: "", // the last operator button clicked
+      lastBtnType: "ans", //  to determine logic for input and operator method. Can be "ans" "input" or "operator"
+      operator: "", // the next operation to be performed on running calc
       fact: "Return a result to see a number fact", // fact relating to the result from numbers api
       styleObject: {
         direction: "ltr"
-      } // when display is too long for the screen can change language direction and clip on the left
+      } // when display is too long for the screen can change language direction and put ellipses on the left
     };
   },
 
@@ -68,7 +75,10 @@ export default {
     input(value) {
       this.keySound();
       if (this.lastBtnType !== "input" && value != 0) {
-        this.display = value;
+        this.display = " ";
+        setTimeout(() => {
+          this.display = value;
+        }, 20); // to display a blink as user feedback that input has been received when the display could be same e.g. 3+3
       } else if (this.lastBtnType === "input" && this.display !== 0) {
         this.display += value;
       }
@@ -80,7 +90,7 @@ export default {
     operation(value) {
       this.keySound();
       if (this.operator === "ans") {
-        this.runningCalc = this.display; // for the first operator button press after a clear
+        this.runningCalc = this.display; // for the first operator button press after a clear or equals
       } else if (this.lastBtnType === "operator") {
         this.operator = value; // if an operator is pushed more than once in a row - only changes the next operation to be performed.
       } else {
@@ -164,35 +174,13 @@ export default {
 };
 </script>
 
-<style scoped>
+<style>
 .calculator {
   margin: 0 auto;
   padding: 60px 5px 40px;
   width: 400px;
   background-color: rgb(211, 206, 206);
   border-radius: 18px;
-}
-
-.component {
-  display: inline-block;
-  border-radius: 18px;
-  cursor: default;
-  user-select: none;
-}
-
-.btn {
-  width: 80px;
-  height: 80px;
-  margin: 6px;
-  line-height: 80px;
-  font-size: 28px;
-  box-shadow: 3px 3px rgb(75, 74, 74);
-}
-
-.btn:active {
-  box-shadow: 1px 1px rgb(99, 98, 98);
-  transform: translateY(1px);
-  transform: translateX(1px);
 }
 
 p {
@@ -217,21 +205,10 @@ p {
   overflow: hidden;
 }
 
-.equals {
-  width: 172px;
-}
-
-.operator {
-  background-color: rgb(104, 103, 102);
-  color: white;
-}
-
-.input {
-  background-color: white;
-}
-
-.clear {
-  width: 172px;
-  background-color: rgb(243, 93, 93);
+.component {
+  display: inline-block;
+  border-radius: 18px;
+  cursor: default;
+  user-select: none;
 }
 </style>
