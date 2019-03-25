@@ -9,12 +9,13 @@
       </div>
       <br>
       <Button value="C" type="clear" v-on:btnClick="clear"/>
-      <Button value="+/-" type="plusMinus" v-on:btnClick="plusMinus"/>
+      <Button value="%" type="input percentage" v-on:btnClick="percentage"/>
+      <Button value="+/-" type="input plusMinus" v-on:btnClick="plusMinus"/>
       <Button value="/" type="operation" v-on:btnClick="operation"/>
       <Button value="7" type="input" v-on:btnClick="input"/>
       <Button value="8" type="input" v-on:btnClick="input"/>
       <Button value="9" type="input" v-on:btnClick="input"/>
-      <Button userValue="x" value="*" type="operation" v-on:btnClick="operation"/>
+      <Button visibleValue="x" value="*" type="operation" v-on:btnClick="operation"/>
       <Button value="4" type="input" v-on:btnClick="input"/>
       <Button value="5" type="input" v-on:btnClick="input"/>
       <Button value="6" type="input" v-on:btnClick="input"/>
@@ -25,7 +26,7 @@
       <Button value="+" type="operation" v-on:btnClick="operation"/>
       <Button value="0" type="input" v-on:btnClick="input"/>
       <Button value="." type="input" v-on:btnClick="input"/>
-      <Button userValue="=" value="ans" type="operation equals" v-on:btnClick="operation"/>
+      <Button visibleValue="=" value="ans" type="operation equals" v-on:btnClick="operation"/>
     </div>
   </div>
 </template>
@@ -44,11 +45,12 @@ export default {
       runningCalc: "", // the running result of calculations performed inbetween clears.
       display: "", // what is shown in the display div
       lastBtnType: "ans", //  to determine logic for input and operator method. Can be "ans" "input" or "operator"
-      operator: "", // the next operation to be performed on running calc
+      operator: "ans", // the next operation to be performed on running calc
       fact: "Return a result to see a number fact", // fact relating to the result from numbers api
       styleObject: {
+        // when display is too long for the screen can change language direction and put ellipses on the left
         direction: "ltr"
-      } // when display is too long for the screen can change language direction and put ellipses on the left
+      }
     };
   },
 
@@ -58,51 +60,76 @@ export default {
 
   methods: {
     clear() {
-      this.keySound();
       this.runningCalc = "";
       this.display = "";
       this.lastBtnType = "ans";
-      this.operator = "";
+      this.operator = "ans";
       this.fact = "Return a result to see a number fact";
     },
 
     plusMinus() {
-      this.keySound();
-      this.display = String(parseFloat(this.display) * -1);
+      // only runs when there is an input to work with
+      if (this.lastBtnType === "input") {
+        this.display = String(parseFloat(this.display) * -1);
+        this.displayDir();
+        this.lastBtnType = "input";
+      }
+    },
+
+    percentage() {
+      this.display = String(parseFloat(this.display) / 100);
       this.displayDir();
     },
 
     input(value) {
-      this.keySound();
-      if (this.lastBtnType !== "input" && value != 0) {
-        this.display = " ";
-        setTimeout(() => {
-          this.display = value;
-        }, 20); // to display a blink as user feedback that input has been received when the display could be same e.g. 3+3
-      } else if (this.lastBtnType === "input" && this.display !== 0) {
-        this.display += value;
+      // the first input value or single input values are identified as lastBtnTybe not being "input"
+      // this value should only be non zero integers or "0."" - append all other inputs
+      if (this.lastBtnType !== "input") {
+        if (value === ".") {
+          this.display = "0.";
+          this.lastBtnType = "input";
+        }
+        if (value !== "0" && value !== ".") {
+          this.display = " ";
+          setTimeout(() => {
+            this.display = value;
+          }, 20); // to display a blink as user feedback that input has been received when the display could be same e.g. 3+3
+          this.lastBtnType = "input";
+        }
+      } else if (this.lastBtnType === "input") {
+        // prevent multiple decimal points eg 45.56.7
+        if (value === "." && !this.display.includes(".")) {
+          this.display += value;
+        }
+        if (value !== ".") {
+          this.display += value;
+        }
       }
       this.displayDir();
-      // if (this.display.length > 16) this.styleObject.direction = "rtl";
-      this.lastBtnType = "input";
     },
 
     operation(value) {
-      this.keySound();
+      // for the first operator button press after a clear or equals
       if (this.operator === "ans") {
-        this.runningCalc = this.display; // for the first operator button press after a clear or equals
+        this.runningCalc = this.display;
       } else if (this.lastBtnType === "operator") {
-        this.operator = value; // if an operator is pushed more than once in a row - only changes the next operation to be performed.
+        // if an operator is pushed more than once in a row - only changes the next operation to be performed.
+        this.operator = value;
       } else {
-        this.runningCalc = eval(
-          `${this.runningCalc}${this.operator}${this.display}`
-        ); // calculates the running total according to the previous operator clicked and stores to runningCalc
+        // calculates the running total according to the previous operator clicked and stores to runningCalc
+        this.runningCalc = String(
+          parseFloat(
+            eval(
+              `${this.runningCalc} ${this.operator} ${this.display}`
+            ).toPrecision(10)
+          )
+        );
       }
-      this.display = this.runningCalc; // displays the runningCalc
+      this.display = this.runningCalc;
       if (value === "ans") this.getFact(this.runningCalc); // retreives number fact for the displayed value if the button pressed was the equals button
       this.displayDir();
-      this.operator = value; // sets the operator to the one the user just clicked
-      this.lastBtnType = "operator"; //
+      this.operator = value;
+      this.lastBtnType = "operator";
     },
 
     // if the display number is long, converts it to an exponential and changes direction so can truncate at the left side of the display.
@@ -147,9 +174,9 @@ export default {
           case "8":
           case "9":
           case "0":
+          case ".":
             this.input(e.key);
             break;
-          case ".":
           case "=":
           case "+":
           case "*":
@@ -164,11 +191,6 @@ export default {
             break;
         }
       }
-    },
-
-    keySound() {
-      var keyPress = new Audio("keyPress.mp3");
-      keyPress.play();
     }
   }
 };

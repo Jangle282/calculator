@@ -3,7 +3,7 @@
     v-on:click="$emit('btnClick', value) "
     :class="type"
     class="component btn"
-  >{{userValue || value}}</div>
+  >{{visibleValue || value}}</div>
 </template>
 
 <script>
@@ -11,7 +11,7 @@ export default {
   props: {
     type: String,
     value: String,
-    userValue: String
+    visibleValue: String
   }
 };
 </script>
@@ -42,7 +42,6 @@ export default {
 }
 
 .clear {
-  width: 172px;
   background-color: rgb(243, 93, 93);
 }
 
